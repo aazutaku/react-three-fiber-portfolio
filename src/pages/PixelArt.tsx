@@ -26,14 +26,16 @@ const ANIMATION_TIME = 3;
 // - 表示アニメーション（段階的な拡大）と移動アニメーション（爆発・波）を制御
 // ===================================================================
 type PixelGridProps = {
-  pixelSize: number;
+  pixelWidth: number;
+  pixelHeight: number;
   pixels: PixelInfo[];
   animation: string;
   fileChangeCount: number;
 };
 
 const PixelGrid = ({
-  pixelSize,
+  pixelWidth,
+  pixelHeight,
   pixels,
   animation,
   fileChangeCount,
@@ -64,27 +66,27 @@ const PixelGrid = ({
       // 変更回数の参照も更新
       prevFileChangeCountRef.current = fileChangeCount;
     }
-  }, [fileChangeCount, pixels.length, pixelSize]);
+  }, [fileChangeCount, pixels.length, pixelWidth, pixelHeight]);
 
   // useFrame で毎フレームの更新処理を行い、段階的にピクセルを表示
   useFrame((_, delta) => {
     // すべてのバッチが表示済みならこれ以上処理を行わない
-    if (batchIndexRef.current > pixels.length / pixelSize) return;
+    if (batchIndexRef.current > pixels.length / pixelWidth) return;
 
     // 前フレームからの経過時間を加算
     scaleProgressRef.current += delta;
 
     // 現在のバッチを表示するための時間の閾値を計算
     const threshold =
-      batchIndexRef.current * (ANIMATION_TIME / (pixels.length / pixelSize));
+      batchIndexRef.current * (ANIMATION_TIME / (pixels.length / pixelWidth));
 
     // 経過時間が閾値を超えたら、次のバッチのピクセルを表示開始
     if (scaleProgressRef.current > threshold) {
       // 現在のスケール状態のコピーを作成
       const newScales = [...scales];
       // 現在のバッチに属するピクセルのインデックス範囲を算出
-      const startIndex = batchIndexRef.current * pixelSize;
-      const endIndex = Math.min(startIndex + pixelSize, pixels.length);
+      const startIndex = batchIndexRef.current * pixelWidth;
+      const endIndex = Math.min(startIndex + pixelWidth, pixels.length);
 
       // 該当するピクセルのスケールを1にして表示させる
       for (let i = startIndex; i < endIndex; i++) {
@@ -241,9 +243,12 @@ const PixelArt = () => {
   // - imageSrc: 読み込んだ画像のData URL
   // - animation: 現在のアニメーションモード
   const [pixels, setPixels] = useState<PixelInfo[] | null>(null);
-  const [tempPixelSize, setTempPixelSize] =
+  const [tempPixelWidth, setTempPixelWidth] =
     useState<number>(DEFAULT_PIXEL_SIZE);
-  const [pixelSize, setPixelSize] = useState<number>(tempPixelSize);
+  const [tempPixelHeight, setTempPixelHeight] =
+    useState<number>(DEFAULT_PIXEL_SIZE);
+  const [pixelWidth, setPixelWidth] = useState<number>(tempPixelWidth);
+  const [pixelHeight, setPixelHeight] = useState<number>(tempPixelHeight);
   const [fileChangeCount, setFileChangeCount] = useState<number>(0);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [animation, setAnimation] = useState("default");
@@ -260,7 +265,8 @@ const PixelArt = () => {
       const url = ev.target?.result;
       if (typeof url !== "string") return;
       // ピクセルサイズを一旦更新してから、画像ソースを設定
-      setPixelSize(tempPixelSize);
+      setPixelWidth(tempPixelWidth);
+      setPixelHeight(tempPixelHeight);
       setImageSrc(url);
     };
     reader.readAsDataURL(file);
@@ -272,7 +278,8 @@ const PixelArt = () => {
   // ----------------------------------------------------
   const reloadImage = () => {
     if (!imageSrc) return;
-    setPixelSize(tempPixelSize);
+    setPixelWidth(tempPixelWidth);
+    setPixelHeight(tempPixelHeight);
   };
 
   // ----------------------------------------------------
@@ -285,11 +292,11 @@ const PixelArt = () => {
     // 新たな画像を読み込み、onload イベントでピクセルデータを生成
     const img = new Image();
     img.onload = () => {
-      const pix = createPixelData(img, pixelSize, pixelSize);
+      const pix = createPixelData(img, pixelWidth, pixelHeight);
       setPixels(pix);
     };
     img.src = imageSrc;
-  }, [pixelSize, imageSrc]);
+  }, [pixelWidth, pixelHeight, imageSrc]);
 
   // ----------------------------------------------------
   // Explosionアニメーションの制御：
@@ -335,11 +342,22 @@ const PixelArt = () => {
 
         {/* ピクセルサイズの入力フィールド */}
         <div className="flex items-center space-x-2">
-          <label className="text-sm text-gray-700">Pixel Size:</label>
+          <label className="text-sm text-gray-700">Pixel Width:</label>
           <input
             type="number"
-            value={tempPixelSize}
-            onChange={(e) => setTempPixelSize(Number(e.target.value))}
+            value={tempPixelWidth}
+            onChange={(e) => setTempPixelWidth(Number(e.target.value))}
+            min="1"
+            max="128"
+            className="w-16 border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <label className="text-sm text-gray-700">Pixel Height:</label>
+          <input
+            type="number"
+            value={tempPixelHeight}
+            onChange={(e) => setTempPixelHeight(Number(e.target.value))}
             min="1"
             max="128"
             className="w-16 border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -382,7 +400,8 @@ const PixelArt = () => {
           {/* ピクセルデータが存在する場合のみPixelGridをレンダリング */}
           {pixels && (
             <PixelGrid
-              pixelSize={pixelSize}
+              pixelWidth={pixelWidth}
+              pixelHeight={pixelHeight}
               pixels={pixels}
               animation={animation}
               fileChangeCount={fileChangeCount}

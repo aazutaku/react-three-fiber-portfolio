@@ -252,6 +252,7 @@ const PixelArt = () => {
   const [fileChangeCount, setFileChangeCount] = useState<number>(0);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [animation, setAnimation] = useState("default");
+  const [isControlPanelOpen, setIsControlPanelOpen] = useState<boolean>(true);
 
   // ----------------------------------------------------
   // 画像ファイルが選択されたときの処理：
@@ -330,63 +331,72 @@ const PixelArt = () => {
 
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
-      {/* ----------------- コントロールパネル ----------------- */}
+      {/* コントロールパネル：isControlPanelOpen が true の場合に表示 */}
       <div className="absolute top-4 left-4 bg-white shadow-lg p-4 rounded-lg z-10 w-64 space-y-4">
-        {/* 画像ファイルの選択 */}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        />
-
-        {/* ピクセルサイズの入力フィールド */}
-        <div className="flex items-center space-x-2">
-          <label className="text-sm text-gray-700">Pixel Width:</label>
-          <input
-            type="number"
-            value={tempPixelWidth}
-            onChange={(e) => setTempPixelWidth(Number(e.target.value))}
-            min="1"
-            max="128"
-            className="w-16 border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          />
-        </div>
-        <div className="flex items-center space-x-2">
-          <label className="text-sm text-gray-700">Pixel Height:</label>
-          <input
-            type="number"
-            value={tempPixelHeight}
-            onChange={(e) => setTempPixelHeight(Number(e.target.value))}
-            min="1"
-            max="128"
-            className="w-16 border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          />
-        </div>
-
-        {/* 再表示ボタン */}
+        {/* コントロールパネルの表示/非表示を切り替えるトグルボタン */}
         <button
-          className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition"
-          onClick={reloadImage}
+          onClick={() => setIsControlPanelOpen(!isControlPanelOpen)}
+          className="accordion-header w-full flex items-center text-left text-lg text-gray-500 font-semibold bg-gray-100 rounded-t-lg"
+          aria-expanded="false"
         >
-          再表示
+          ControlPanel
+          <span className="ml-auto">{isControlPanelOpen ? "▲" : "▼"}</span>
         </button>
+        {isControlPanelOpen && (
+          <>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
 
-        {/* アニメーション制御ボタン */}
-        <div className="flex flex-wrap gap-2">
-          <button
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
-            onClick={controlExplosionAnimation}
-          >
-            Explosion
-          </button>
-          <button
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
-            onClick={controlWaveAnimation}
-          >
-            Wave
-          </button>
-        </div>
+            <div className="flex items-center space-x-2">
+              <label className="text-sm text-gray-700">Pixel Width:</label>
+              <input
+                type="number"
+                value={tempPixelWidth}
+                onChange={(e) => setTempPixelWidth(Number(e.target.value))}
+                min="1"
+                max="128"
+                className="w-16 border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <label className="text-sm text-gray-700">Pixel Height:</label>
+              <input
+                type="number"
+                value={tempPixelHeight}
+                onChange={(e) => setTempPixelHeight(Number(e.target.value))}
+                min="1"
+                max="128"
+                className="w-16 border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+
+            <button
+              className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition"
+              onClick={reloadImage}
+            >
+              再表示
+            </button>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
+                onClick={controlExplosionAnimation}
+              >
+                Explosion
+              </button>
+              <button
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
+                onClick={controlWaveAnimation}
+              >
+                Wave
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ----------------- メインCanvas：ピクセルシーン ----------------- */}
